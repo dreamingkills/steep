@@ -6,8 +6,8 @@ import (
 	"github.com/dreamingkills/steep/graph/generated"
 	"github.com/dreamingkills/steep/graph/model"
 	"github.com/dreamingkills/steep/lib/presenters"
-	"github.com/dreamingkills/steep/lib/presenters/services/merchants"
-	"github.com/dreamingkills/steep/lib/presenters/services/teas"
+	"github.com/dreamingkills/steep/lib/services/merchants"
+	"github.com/dreamingkills/steep/lib/services/teas"
 	"github.com/dreamingkills/steep/models"
 )
 
