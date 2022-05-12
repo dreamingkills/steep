@@ -12,7 +12,10 @@ import (
 
 func (r *mutationResolver) CreateMerchant(ctx context.Context, input model.NewMerchant) (*model.Merchant, error) {
 	var dbMerchant models.Merchant
-	if err := r.DB.QueryRow(context.Background(), "INSERT INTO merchant (name, url) VALUES ($1, $2) RETURNING *", input.Name, input.URL).Scan(&dbMerchant.ID, &dbMerchant.Name, &dbMerchant.URL); err != nil {
+	if err := r.DB.QueryRow(context.Background(),
+		`INSERT INTO
+			merchant (name, url) 
+		VALUES ($1, $2) RETURNING *`, input.Name, input.URL).Scan(&dbMerchant.ID, &dbMerchant.Name, &dbMerchant.URL); err != nil {
 		return nil, err
 	}
 
@@ -35,7 +38,10 @@ func (r *mutationResolver) CreateTea(ctx context.Context, input model.CreateTeaI
 
 	var dbTea Tea
 
-	if err := r.DB.QueryRow(context.Background(), "INSERT INTO tea (name, type, merchant_id) VALUES ($1, $2, $3) RETURNING *", input.Name, input.Type.String(), input.MerchantID).Scan(&dbTea.ID, &dbTea.Name, &dbTea.Type, &dbTea.MerchantID); err != nil {
+	if err := r.DB.QueryRow(context.Background(),
+		`INSERT INTO 
+			tea (name, type, merchant_id) 
+		VALUES ($1, $2, $3) RETURNING *`, input.Name, input.Type.String(), input.MerchantID).Scan(&dbTea.ID, &dbTea.Name, &dbTea.Type, &dbTea.MerchantID); err != nil {
 		return nil, err
 	}
 
@@ -62,7 +68,16 @@ func (r *queryResolver) Merchant(ctx context.Context, input *model.MerchantInput
 
 	var dbMerchant models.Merchant
 
-	if err := r.DB.QueryRow(context.Background(), "SELECT id, name, url FROM merchant WHERE name = $1 OR id = $2", input.Name, input.ID).Scan(&dbMerchant.ID, &dbMerchant.Name, &dbMerchant.URL); err != nil {
+	if err := r.DB.QueryRow(context.Background(),
+		`SELECT 
+			id,
+			name,
+			url
+		FROM
+			merchant
+		WHERE
+			name = $1 
+			OR id = $2`, input.Name, input.ID).Scan(&dbMerchant.ID, &dbMerchant.Name, &dbMerchant.URL); err != nil {
 		if pgxscan.NotFound(err) {
 			return nil, nil
 		} else {
@@ -90,7 +105,17 @@ func (r *queryResolver) Tea(ctx context.Context, input *model.TeaInput) (*model.
 
 	var dbTea Tea
 
-	if err := r.DB.QueryRow(context.Background(), "SELECT tea.id, tea.name, tea.type, merchant.id AS \"merchant.id\", merchant.name AS \"merchant.name\", merchant.url AS \"merchant.url\" FROM tea LEFT JOIN merchant ON merchant.id = tea.merchant_id WHERE tea.id = $1", input.ID).Scan(&dbTea.ID, &dbTea.Name, &dbTea.Type, &dbTea.Merchant.ID, &dbTea.Merchant.Name, &dbTea.Merchant.URL); err != nil {
+	if err := r.DB.QueryRow(context.Background(),
+		`SELECT 
+			tea.id,
+			tea.name,
+			tea.type,
+			merchant.id AS "merchant.id",
+			merchant.name AS "merchant.name",
+			merchant.url AS "merchant.url"
+		FROM tea 
+		LEFT JOIN merchant ON merchant.id = tea.merchant_id
+		WHERE tea.id = $1`, input.ID).Scan(&dbTea.ID, &dbTea.Name, &dbTea.Type, &dbTea.Merchant.ID, &dbTea.Merchant.Name, &dbTea.Merchant.URL); err != nil {
 		if pgxscan.NotFound(err) {
 			return nil, nil
 		} else {
