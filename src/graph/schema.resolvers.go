@@ -2,10 +2,10 @@ package graph
 
 import (
 	"context"
-	"strconv"
 
 	"github.com/dreamingkills/steep/graph/generated"
 	"github.com/dreamingkills/steep/graph/model"
+	"github.com/dreamingkills/steep/lib/presenters"
 	"github.com/dreamingkills/steep/models"
 	"github.com/georgysavva/scany/pgxscan"
 )
@@ -19,24 +19,11 @@ func (r *mutationResolver) CreateMerchant(ctx context.Context, input model.NewMe
 		return nil, err
 	}
 
-	merchant := model.Merchant{
-		ID:   strconv.Itoa(int(dbMerchant.ID)),
-		Name: dbMerchant.Name,
-		URL:  &dbMerchant.URL,
-	}
-
-	return &merchant, nil
+	return presenters.PresentMerchant(dbMerchant), nil
 }
 
 func (r *mutationResolver) CreateTea(ctx context.Context, input model.CreateTeaInput) (*model.Tea, error) {
-	type Tea struct {
-		ID         uint32
-		Name       string
-		Type       string
-		MerchantID uint32
-	}
-
-	var dbTea Tea
+	var dbTea models.Tea
 
 	if err := r.DB.QueryRow(context.Background(),
 		`INSERT INTO 
@@ -45,20 +32,11 @@ func (r *mutationResolver) CreateTea(ctx context.Context, input model.CreateTeaI
 		return nil, err
 	}
 
-	var merchant models.Merchant
-
-	if err := r.DB.QueryRow(context.Background(), "SELECT id, name, url FROM merchant WHERE id = $1", dbTea.MerchantID).Scan(&merchant.ID, &merchant.Name, &merchant.URL); err != nil {
+	if err := r.DB.QueryRow(context.Background(), "SELECT id, name, url FROM merchant WHERE id = $1", dbTea.MerchantID).Scan(&dbTea.Merchant.ID, &dbTea.Merchant.Name, &dbTea.Merchant.URL); err != nil {
 		return nil, err
 	}
 
-	tea := model.Tea{
-		ID:       strconv.Itoa(int(dbTea.ID)),
-		Name:     dbTea.Name,
-		Type:     model.TeaType(dbTea.Type),
-		Merchant: &model.Merchant{ID: strconv.Itoa(int(merchant.ID)), Name: merchant.Name, URL: &merchant.URL},
-	}
-
-	return &tea, nil
+	return presenters.PresentTea(dbTea), nil
 }
 
 func (r *queryResolver) Merchant(ctx context.Context, input *model.MerchantInput) (*model.Merchant, error) {
@@ -85,25 +63,11 @@ func (r *queryResolver) Merchant(ctx context.Context, input *model.MerchantInput
 		}
 	}
 
-	merchant := model.Merchant{
-		ID:   strconv.Itoa(int(dbMerchant.ID)),
-		Name: dbMerchant.Name,
-		URL:  &dbMerchant.URL,
-	}
-
-	return &merchant, nil
+	return presenters.PresentMerchant(dbMerchant), nil
 }
 
 func (r *queryResolver) Tea(ctx context.Context, input *model.TeaInput) (*model.Tea, error) {
-	type Tea struct {
-		ID         uint32
-		Name       string
-		Type       string
-		MerchantID uint32
-		Merchant   models.Merchant
-	}
-
-	var dbTea Tea
+	var dbTea models.Tea
 
 	if err := r.DB.QueryRow(context.Background(),
 		`SELECT 
@@ -123,14 +87,7 @@ func (r *queryResolver) Tea(ctx context.Context, input *model.TeaInput) (*model.
 		}
 	}
 
-	tea := model.Tea{
-		ID:       strconv.Itoa(int(dbTea.ID)),
-		Name:     dbTea.Name,
-		Type:     model.TeaType(dbTea.Type),
-		Merchant: &model.Merchant{ID: strconv.Itoa(int(dbTea.Merchant.ID)), Name: dbTea.Merchant.Name, URL: &dbTea.Merchant.URL},
-	}
-
-	return &tea, nil
+	return presenters.PresentTea(dbTea), nil
 }
 
 // Mutation returns generated.MutationResolver implementation.

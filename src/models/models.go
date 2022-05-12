@@ -14,6 +14,7 @@ type Tea struct {
 	Name       string
 	Type       TeaType
 	MerchantID uint
+	Merchant   Merchant
 }
 
 type TeaType string
