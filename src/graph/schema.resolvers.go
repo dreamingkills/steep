@@ -1,28 +1,20 @@
 package graph
 
-// This file will be automatically regenerated based on the schema, any resolver implementations
-// will be copied through when generating and any unknown code will be moved to the end.
-
 import (
 	"context"
-	"errors"
 	"strconv"
 
 	"github.com/dreamingkills/steep/graph/generated"
 	"github.com/dreamingkills/steep/graph/model"
 	"github.com/dreamingkills/steep/models"
-	"gorm.io/gorm"
+	"github.com/georgysavva/scany/pgxscan"
 )
 
 func (r *mutationResolver) CreateMerchant(ctx context.Context, input model.NewMerchant) (*model.Merchant, error) {
-	var url string
-
-	if(input.URL != nil) {
-		url = *input.URL
+	var dbMerchant models.Merchant
+	if err := r.DB.QueryRow(context.Background(), "INSERT INTO merchant (name, url) VALUES ($1, $2) RETURNING *", input.Name, input.URL).Scan(&dbMerchant.ID, &dbMerchant.Name, &dbMerchant.URL); err != nil {
+		return nil, err
 	}
-
-	dbMerchant := models.Merchant{Name: input.Name, URL: url}
-	r.DB.Save(&dbMerchant)
 
 	merchant := model.Merchant{
 		ID:   strconv.Itoa(int(dbMerchant.ID)),
@@ -33,27 +25,47 @@ func (r *mutationResolver) CreateMerchant(ctx context.Context, input model.NewMe
 	return &merchant, nil
 }
 
+
+
+func (r *mutationResolver) CreateTea(ctx context.Context, input model.CreateTeaInput) (*model.Tea, error) {
+	type Tea struct {
+		ID uint32
+		Name string
+		Type string
+		MerchantID uint32
+	}
+
+	var dbTea Tea
+
+	if err := r.DB.QueryRow(context.Background(), "INSERT INTO tea (name, type, merchant_id) VALUES ($1, $2, $3) RETURNING *", input.Name, input.Type.String(), input.MerchantID).Scan(&dbTea.ID, &dbTea.Name, &dbTea.Type, &dbTea.MerchantID); err != nil {
+		return nil, err
+	}
+
+	var merchant models.Merchant
+
+	if err := r.DB.QueryRow(context.Background(), "SELECT id, name, url FROM merchant WHERE id = $1", dbTea.MerchantID).Scan(&merchant.ID, &merchant.Name, &merchant.URL); err != nil {
+		return nil, err
+	}
+
+	tea := model.Tea{
+		ID: strconv.Itoa(int(dbTea.ID)),
+		Name: dbTea.Name,
+		Type: model.TeaType(dbTea.Type),
+		Merchant: &model.Merchant{ID: strconv.Itoa(int(merchant.ID)), Name: merchant.Name, URL: &merchant.URL},
+	}
+
+	return &tea, nil
+}
+
 func (r *queryResolver) Merchant(ctx context.Context, input *model.MerchantInput) (*model.Merchant, error) {
 	if input.ID == nil && input.Name == nil {
 		return nil, nil
 	}
 
-	var id int
-
-	if input.ID != nil {
-		_id, err := strconv.Atoi(*input.ID)
-
-		if err != nil {
-			return nil, err
-		}
-
-		id = _id
-	}
-
 	var dbMerchant models.Merchant
 
-	if err := r.DB.Where("name = ? OR id = ?", input.Name, id).First(&dbMerchant).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+	if err := r.DB.QueryRow(context.Background(), "SELECT id, name, url FROM merchant WHERE name = $1 OR id = $2", input.Name, input.ID).Scan(&dbMerchant.ID, &dbMerchant.Name, &dbMerchant.URL); err != nil {
+		if pgxscan.NotFound(err) {
 			return nil, nil
 		} else {
 			return nil, err
@@ -67,6 +79,35 @@ func (r *queryResolver) Merchant(ctx context.Context, input *model.MerchantInput
 	}
 
 	return &merchant, nil
+}
+
+func (r *queryResolver) Tea(ctx context.Context, input *model.TeaInput) (*model.Tea, error) {
+	type Tea struct {
+		ID uint32
+		Name string
+		Type string
+		MerchantID uint32
+		Merchant models.Merchant
+	}
+
+	var dbTea Tea
+
+	if err := r.DB.QueryRow(context.Background(), "SELECT tea.id, tea.name, tea.type, merchant.id AS \"merchant.id\", merchant.name AS \"merchant.name\", merchant.url AS \"merchant.url\" FROM tea LEFT JOIN merchant ON merchant.id = tea.merchant_id WHERE tea.id = $1", input.ID).Scan(&dbTea.ID, &dbTea.Name, &dbTea.Type, &dbTea.Merchant.ID, &dbTea.Merchant.Name, &dbTea.Merchant.URL); err != nil {
+		if pgxscan.NotFound(err) {
+			return nil, nil
+		} else {
+			return nil, err
+		}
+	}
+
+	tea := model.Tea{
+		ID: strconv.Itoa(int(dbTea.ID)),
+		Name: dbTea.Name,
+		Type: model.TeaType(dbTea.Type),
+		Merchant: &model.Merchant{ID: strconv.Itoa(int(dbTea.Merchant.ID)), Name: dbTea.Merchant.Name, URL: &dbTea.Merchant.URL},
+	}
+
+	return &tea, nil
 }
 
 // Mutation returns generated.MutationResolver implementation.

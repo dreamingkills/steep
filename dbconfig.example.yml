@@ -1,0 +1,6 @@
+development:
+  dialect: postgres
+  # for some reason .env does not work with this yaml so it's here for now. not sensitive!
+  datasource: host=localhost user=postgres password=password dbname=steep port=5432 sslmode=disable
+  dir: migrations
+  table: migrations

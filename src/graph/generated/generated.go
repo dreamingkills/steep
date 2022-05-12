@@ -51,18 +51,29 @@ type ComplexityRoot struct {
 
 	Mutation struct {
 		CreateMerchant func(childComplexity int, input model.NewMerchant) int
+		CreateTea      func(childComplexity int, input model.CreateTeaInput) int
 	}
 
 	Query struct {
 		Merchant func(childComplexity int, input *model.MerchantInput) int
+		Tea      func(childComplexity int, input *model.TeaInput) int
+	}
+
+	Tea struct {
+		ID       func(childComplexity int) int
+		Merchant func(childComplexity int) int
+		Name     func(childComplexity int) int
+		Type     func(childComplexity int) int
 	}
 }
 
 type MutationResolver interface {
 	CreateMerchant(ctx context.Context, input model.NewMerchant) (*model.Merchant, error)
+	CreateTea(ctx context.Context, input model.CreateTeaInput) (*model.Tea, error)
 }
 type QueryResolver interface {
 	Merchant(ctx context.Context, input *model.MerchantInput) (*model.Merchant, error)
+	Tea(ctx context.Context, input *model.TeaInput) (*model.Tea, error)
 }
 
 type executableSchema struct {
@@ -113,6 +124,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CreateMerchant(childComplexity, args["input"].(model.NewMerchant)), true
 
+	case "Mutation.createTea":
+		if e.complexity.Mutation.CreateTea == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createTea_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateTea(childComplexity, args["input"].(model.CreateTeaInput)), true
+
 	case "Query.merchant":
 		if e.complexity.Query.Merchant == nil {
 			break
@@ -125,6 +148,46 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Merchant(childComplexity, args["input"].(*model.MerchantInput)), true
 
+	case "Query.tea":
+		if e.complexity.Query.Tea == nil {
+			break
+		}
+
+		args, err := ec.field_Query_tea_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Tea(childComplexity, args["input"].(*model.TeaInput)), true
+
+	case "Tea.id":
+		if e.complexity.Tea.ID == nil {
+			break
+		}
+
+		return e.complexity.Tea.ID(childComplexity), true
+
+	case "Tea.merchant":
+		if e.complexity.Tea.Merchant == nil {
+			break
+		}
+
+		return e.complexity.Tea.Merchant(childComplexity), true
+
+	case "Tea.name":
+		if e.complexity.Tea.Name == nil {
+			break
+		}
+
+		return e.complexity.Tea.Name(childComplexity), true
+
+	case "Tea.type":
+		if e.complexity.Tea.Type == nil {
+			break
+		}
+
+		return e.complexity.Tea.Type(childComplexity), true
+
 	}
 	return 0, false
 }
@@ -133,8 +196,10 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	rc := graphql.GetOperationContext(ctx)
 	ec := executionContext{rc, e}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputCreateTeaInput,
 		ec.unmarshalInputMerchantInput,
 		ec.unmarshalInputNewMerchant,
+		ec.unmarshalInputTeaInput,
 	)
 	first := true
 
@@ -210,8 +275,36 @@ input NewMerchant {
   url: String
 }
 
+enum TeaType {
+  black
+  green
+  oolong
+  white
+  puerh
+  yellow
+  other
+}
+
+type Tea {
+  id: ID!
+  name: String!
+  type: TeaType!
+  merchant: Merchant!
+}
+
+input TeaInput {
+  id: ID!
+}
+
+input CreateTeaInput {
+  name: String!
+  type: TeaType!
+  merchantId: ID!
+}
+
 type Mutation {
   createMerchant(input: NewMerchant!): Merchant!
+  createTea(input: CreateTeaInput!): Tea!
 }
 
 input MerchantInput {
@@ -221,6 +314,7 @@ input MerchantInput {
 
 type Query {
   merchant(input: MerchantInput): Merchant
+  tea(input: TeaInput): Tea
 }
 `, BuiltIn: false},
 }
@@ -237,6 +331,21 @@ func (ec *executionContext) field_Mutation_createMerchant_args(ctx context.Conte
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalNNewMerchant2githubᚗcomᚋdreamingkillsᚋsteepᚋgraphᚋmodelᚐNewMerchant(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_createTea_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.CreateTeaInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNCreateTeaInput2githubᚗcomᚋdreamingkillsᚋsteepᚋgraphᚋmodelᚐCreateTeaInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -267,6 +376,21 @@ func (ec *executionContext) field_Query_merchant_args(ctx context.Context, rawAr
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalOMerchantInput2ᚖgithubᚗcomᚋdreamingkillsᚋsteepᚋgraphᚋmodelᚐMerchantInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_tea_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *model.TeaInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalOTeaInput2ᚖgithubᚗcomᚋdreamingkillsᚋsteepᚋgraphᚋmodelᚐTeaInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -505,6 +629,71 @@ func (ec *executionContext) fieldContext_Mutation_createMerchant(ctx context.Con
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_createTea(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_createTea(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreateTea(rctx, fc.Args["input"].(model.CreateTeaInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Tea)
+	fc.Result = res
+	return ec.marshalNTea2ᚖgithubᚗcomᚋdreamingkillsᚋsteepᚋgraphᚋmodelᚐTea(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createTea(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Tea_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Tea_name(ctx, field)
+			case "type":
+				return ec.fieldContext_Tea_type(ctx, field)
+			case "merchant":
+				return ec.fieldContext_Tea_merchant(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Tea", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createTea_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_merchant(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_merchant(ctx, field)
 	if err != nil {
@@ -559,6 +748,68 @@ func (ec *executionContext) fieldContext_Query_merchant(ctx context.Context, fie
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_merchant_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_tea(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_tea(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Tea(rctx, fc.Args["input"].(*model.TeaInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Tea)
+	fc.Result = res
+	return ec.marshalOTea2ᚖgithubᚗcomᚋdreamingkillsᚋsteepᚋgraphᚋmodelᚐTea(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_tea(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Tea_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Tea_name(ctx, field)
+			case "type":
+				return ec.fieldContext_Tea_type(ctx, field)
+			case "merchant":
+				return ec.fieldContext_Tea_merchant(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Tea", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_tea_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -689,6 +940,190 @@ func (ec *executionContext) fieldContext_Query___schema(ctx context.Context, fie
 				return ec.fieldContext___Schema_directives(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Schema", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Tea_id(ctx context.Context, field graphql.CollectedField, obj *model.Tea) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Tea_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Tea_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Tea",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Tea_name(ctx context.Context, field graphql.CollectedField, obj *model.Tea) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Tea_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Tea_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Tea",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Tea_type(ctx context.Context, field graphql.CollectedField, obj *model.Tea) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Tea_type(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Type, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.TeaType)
+	fc.Result = res
+	return ec.marshalNTeaType2githubᚗcomᚋdreamingkillsᚋsteepᚋgraphᚋmodelᚐTeaType(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Tea_type(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Tea",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type TeaType does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Tea_merchant(ctx context.Context, field graphql.CollectedField, obj *model.Tea) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Tea_merchant(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Merchant, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Merchant)
+	fc.Result = res
+	return ec.marshalNMerchant2ᚖgithubᚗcomᚋdreamingkillsᚋsteepᚋgraphᚋmodelᚐMerchant(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Tea_merchant(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Tea",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Merchant_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Merchant_name(ctx, field)
+			case "url":
+				return ec.fieldContext_Merchant_url(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Merchant", field.Name)
 		},
 	}
 	return fc, nil
@@ -2467,6 +2902,45 @@ func (ec *executionContext) fieldContext___Type_specifiedByURL(ctx context.Conte
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputCreateTeaInput(ctx context.Context, obj interface{}) (model.CreateTeaInput, error) {
+	var it model.CreateTeaInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "name":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			it.Name, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "type":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+			it.Type, err = ec.unmarshalNTeaType2githubᚗcomᚋdreamingkillsᚋsteepᚋgraphᚋmodelᚐTeaType(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "merchantId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("merchantId"))
+			it.MerchantID, err = ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputMerchantInput(ctx context.Context, obj interface{}) (model.MerchantInput, error) {
 	var it model.MerchantInput
 	asMap := map[string]interface{}{}
@@ -2520,6 +2994,29 @@ func (ec *executionContext) unmarshalInputNewMerchant(ctx context.Context, obj i
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("url"))
 			it.URL, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputTeaInput(ctx context.Context, obj interface{}) (model.TeaInput, error) {
+	var it model.TeaInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "id":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			it.ID, err = ec.unmarshalNID2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -2604,6 +3101,15 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "createTea":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createTea(ctx, field)
+			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -2654,6 +3160,26 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
+		case "tea":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_tea(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
 		case "__type":
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
@@ -2666,6 +3192,55 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				return ec._Query___schema(ctx, field)
 			})
 
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var teaImplementors = []string{"Tea"}
+
+func (ec *executionContext) _Tea(ctx context.Context, sel ast.SelectionSet, obj *model.Tea) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, teaImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Tea")
+		case "id":
+
+			out.Values[i] = ec._Tea_id(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "name":
+
+			out.Values[i] = ec._Tea_name(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "type":
+
+			out.Values[i] = ec._Tea_type(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "merchant":
+
+			out.Values[i] = ec._Tea_merchant(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3010,6 +3585,11 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) unmarshalNCreateTeaInput2githubᚗcomᚋdreamingkillsᚋsteepᚋgraphᚋmodelᚐCreateTeaInput(ctx context.Context, v interface{}) (model.CreateTeaInput, error) {
+	res, err := ec.unmarshalInputCreateTeaInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3057,6 +3637,30 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNTea2githubᚗcomᚋdreamingkillsᚋsteepᚋgraphᚋmodelᚐTea(ctx context.Context, sel ast.SelectionSet, v model.Tea) graphql.Marshaler {
+	return ec._Tea(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNTea2ᚖgithubᚗcomᚋdreamingkillsᚋsteepᚋgraphᚋmodelᚐTea(ctx context.Context, sel ast.SelectionSet, v *model.Tea) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Tea(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNTeaType2githubᚗcomᚋdreamingkillsᚋsteepᚋgraphᚋmodelᚐTeaType(ctx context.Context, v interface{}) (model.TeaType, error) {
+	var res model.TeaType
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNTeaType2githubᚗcomᚋdreamingkillsᚋsteepᚋgraphᚋmodelᚐTeaType(ctx context.Context, sel ast.SelectionSet, v model.TeaType) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {
@@ -3383,6 +3987,21 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	}
 	res := graphql.MarshalString(*v)
 	return res
+}
+
+func (ec *executionContext) marshalOTea2ᚖgithubᚗcomᚋdreamingkillsᚋsteepᚋgraphᚋmodelᚐTea(ctx context.Context, sel ast.SelectionSet, v *model.Tea) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Tea(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOTeaInput2ᚖgithubᚗcomᚋdreamingkillsᚋsteepᚋgraphᚋmodelᚐTeaInput(ctx context.Context, v interface{}) (*model.TeaInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputTeaInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {

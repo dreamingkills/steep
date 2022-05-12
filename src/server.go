@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"context"
 	"log"
 	"net/http"
 	"os"
@@ -10,11 +10,8 @@ import (
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/dreamingkills/steep/graph"
 	"github.com/dreamingkills/steep/graph/generated"
-	"github.com/dreamingkills/steep/models"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/joho/godotenv"
-
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 )
 
 const defaultPort = "8080"
@@ -25,23 +22,7 @@ func main() {
 		panic(err)
 	}
 
-	db, err := gorm.Open(postgres.Open(os.Getenv("DSN")), &gorm.Config{})
-
-	if(err != nil) {
-		panic(err)
-	}
-
-	db.Exec("CREATE DATABASE steep;")
-	if(db.Error != nil) {
-		fmt.Println("unable to create database, attempting to connect...")
-	}
-
-	db, err = gorm.Open(postgres.Open(os.Getenv("DSN")), &gorm.Config{})
-	if(err != nil) {
-		panic(err)
-	}
-	
-	err = db.AutoMigrate(models.Models...)
+	db, err := pgxpool.Connect(context.Background(), os.Getenv("DSN"))
 	if(err != nil) {
 		panic(err)
 	}

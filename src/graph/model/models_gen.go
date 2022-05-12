@@ -2,6 +2,18 @@
 
 package model
 
+import (
+	"fmt"
+	"io"
+	"strconv"
+)
+
+type CreateTeaInput struct {
+	Name       string  `json:"name"`
+	Type       TeaType `json:"type"`
+	MerchantID string  `json:"merchantId"`
+}
+
 type Merchant struct {
 	ID   string  `json:"id"`
 	Name string  `json:"name"`
@@ -16,4 +28,66 @@ type MerchantInput struct {
 type NewMerchant struct {
 	Name string  `json:"name"`
 	URL  *string `json:"url"`
+}
+
+type Tea struct {
+	ID       string    `json:"id"`
+	Name     string    `json:"name"`
+	Type     TeaType   `json:"type"`
+	Merchant *Merchant `json:"merchant"`
+}
+
+type TeaInput struct {
+	ID string `json:"id"`
+}
+
+type TeaType string
+
+const (
+	TeaTypeBlack  TeaType = "black"
+	TeaTypeGreen  TeaType = "green"
+	TeaTypeOolong TeaType = "oolong"
+	TeaTypeWhite  TeaType = "white"
+	TeaTypePuerh  TeaType = "puerh"
+	TeaTypeYellow TeaType = "yellow"
+	TeaTypeOther  TeaType = "other"
+)
+
+var AllTeaType = []TeaType{
+	TeaTypeBlack,
+	TeaTypeGreen,
+	TeaTypeOolong,
+	TeaTypeWhite,
+	TeaTypePuerh,
+	TeaTypeYellow,
+	TeaTypeOther,
+}
+
+func (e TeaType) IsValid() bool {
+	switch e {
+	case TeaTypeBlack, TeaTypeGreen, TeaTypeOolong, TeaTypeWhite, TeaTypePuerh, TeaTypeYellow, TeaTypeOther:
+		return true
+	}
+	return false
+}
+
+func (e TeaType) String() string {
+	return string(e)
+}
+
+func (e *TeaType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = TeaType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid TeaType", str)
+	}
+	return nil
+}
+
+func (e TeaType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }
