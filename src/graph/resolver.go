@@ -4,6 +4,6 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
-type Resolver struct{
+type Resolver struct {
 	DB *pgxpool.Pool
 }

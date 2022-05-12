@@ -25,13 +25,11 @@ func (r *mutationResolver) CreateMerchant(ctx context.Context, input model.NewMe
 	return &merchant, nil
 }
 
-
-
 func (r *mutationResolver) CreateTea(ctx context.Context, input model.CreateTeaInput) (*model.Tea, error) {
 	type Tea struct {
-		ID uint32
-		Name string
-		Type string
+		ID         uint32
+		Name       string
+		Type       string
 		MerchantID uint32
 	}
 
@@ -48,9 +46,9 @@ func (r *mutationResolver) CreateTea(ctx context.Context, input model.CreateTeaI
 	}
 
 	tea := model.Tea{
-		ID: strconv.Itoa(int(dbTea.ID)),
-		Name: dbTea.Name,
-		Type: model.TeaType(dbTea.Type),
+		ID:       strconv.Itoa(int(dbTea.ID)),
+		Name:     dbTea.Name,
+		Type:     model.TeaType(dbTea.Type),
 		Merchant: &model.Merchant{ID: strconv.Itoa(int(merchant.ID)), Name: merchant.Name, URL: &merchant.URL},
 	}
 
@@ -83,11 +81,11 @@ func (r *queryResolver) Merchant(ctx context.Context, input *model.MerchantInput
 
 func (r *queryResolver) Tea(ctx context.Context, input *model.TeaInput) (*model.Tea, error) {
 	type Tea struct {
-		ID uint32
-		Name string
-		Type string
+		ID         uint32
+		Name       string
+		Type       string
 		MerchantID uint32
-		Merchant models.Merchant
+		Merchant   models.Merchant
 	}
 
 	var dbTea Tea
@@ -101,9 +99,9 @@ func (r *queryResolver) Tea(ctx context.Context, input *model.TeaInput) (*model.
 	}
 
 	tea := model.Tea{
-		ID: strconv.Itoa(int(dbTea.ID)),
-		Name: dbTea.Name,
-		Type: model.TeaType(dbTea.Type),
+		ID:       strconv.Itoa(int(dbTea.ID)),
+		Name:     dbTea.Name,
+		Type:     model.TeaType(dbTea.Type),
 		Merchant: &model.Merchant{ID: strconv.Itoa(int(dbTea.Merchant.ID)), Name: dbTea.Merchant.Name, URL: &dbTea.Merchant.URL},
 	}
 

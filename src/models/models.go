@@ -3,16 +3,16 @@ package models
 import "database/sql/driver"
 
 type Merchant struct {
-	ID   uint
-	Name string
-	URL  string
+	ID           uint
+	Name         string
+	URL          string
 	MerchantTeas []Tea
 }
 
 type Tea struct {
-	ID uint
-	Name string
-	Type TeaType
+	ID         uint
+	Name       string
+	Type       TeaType
 	MerchantID uint
 }
 

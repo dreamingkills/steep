@@ -18,12 +18,12 @@ const defaultPort = "8080"
 
 func main() {
 	err := godotenv.Load("../.env")
-	if(err != nil) {
+	if err != nil {
 		panic(err)
 	}
 
 	db, err := pgxpool.Connect(context.Background(), os.Getenv("DSN"))
-	if(err != nil) {
+	if err != nil {
 		panic(err)
 	}
 
