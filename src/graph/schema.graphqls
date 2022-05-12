@@ -1,0 +1,27 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+type Merchant {
+  id: ID!
+  name: String!
+  url: String
+}
+
+input NewMerchant {
+  name: String!
+  url: String
+}
+
+type Mutation {
+  createMerchant(input: NewMerchant!): Merchant!
+}
+
+input MerchantInput {
+  id: ID
+  name: String
+}
+
+type Query {
+  merchant(input: MerchantInput): Merchant
+}
